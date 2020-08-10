@@ -51,15 +51,14 @@ open class EtherKeystore: Keystore {
     private let keychain: KeychainSwift
     private let defaultKeychainAccessUserPresenceRequired: KeychainSwiftAccessOptions = .accessibleWhenUnlockedThisDeviceOnly(userPresenceRequired: true)
     private let defaultKeychainAccessUserPresenceNotRequired: KeychainSwiftAccessOptions = .accessibleWhenUnlockedThisDeviceOnly(userPresenceRequired: false)
-    private let userDefaults: UserDefaults
 
     private var watchAddresses: [String] {
         set {
             let data = NSKeyedArchiver.archivedData(withRootObject: newValue)
-            return userDefaults.set(data, forKey: Keys.watchAddresses)
+            keychain.set(data, forKey: Keys.watchAddresses, withAccess: defaultKeychainAccessUserPresenceNotRequired)
         }
         get {
-            guard let data = userDefaults.data(forKey: Keys.watchAddresses) else {
+            guard let data = keychain.getData(Keys.watchAddresses) else {
                 return []
             }
             return NSKeyedUnarchiver.unarchiveObject(with: data) as? [String] ?? []
@@ -69,10 +68,10 @@ open class EtherKeystore: Keystore {
     private var ethereumAddressesWithPrivateKeys: [String] {
         set {
             let data = NSKeyedArchiver.archivedData(withRootObject: newValue)
-            return userDefaults.set(data, forKey: Keys.ethereumAddressesWithPrivateKeys)
+            keychain.set(data, forKey: Keys.ethereumAddressesWithPrivateKeys, withAccess: defaultKeychainAccessUserPresenceNotRequired)
         }
         get {
-            guard let data = userDefaults.data(forKey: Keys.ethereumAddressesWithPrivateKeys) else {
+            guard let data = keychain.getData(Keys.ethereumAddressesWithPrivateKeys) else {
                 return []
             }
             return NSKeyedUnarchiver.unarchiveObject(with: data) as? [String] ?? []
@@ -82,10 +81,10 @@ open class EtherKeystore: Keystore {
     private var ethereumAddressesWithSeed: [String] {
         set {
             let data = NSKeyedArchiver.archivedData(withRootObject: newValue)
-            return userDefaults.set(data, forKey: Keys.ethereumAddressesWithSeed)
+            keychain.set(data, forKey: Keys.ethereumAddressesWithSeed, withAccess: defaultKeychainAccessUserPresenceNotRequired)
         }
         get {
-            guard let data = userDefaults.data(forKey: Keys.ethereumAddressesWithSeed) else {
+            guard let data = keychain.getData(Keys.ethereumAddressesWithSeed) else {
                 return []
             }
             return NSKeyedUnarchiver.unarchiveObject(with: data) as? [String] ?? []
@@ -95,12 +94,13 @@ open class EtherKeystore: Keystore {
     private var ethereumAddressesProtectedByUserPresence: [String] {
         set {
             let data = NSKeyedArchiver.archivedData(withRootObject: newValue)
-            return userDefaults.set(data, forKey: Keys.ethereumAddressesProtectedByUserPresence)
+            keychain.set(data, forKey: Keys.ethereumAddressesProtectedByUserPresence, withAccess: defaultKeychainAccessUserPresenceNotRequired)
         }
         get {
-            guard let data = userDefaults.data(forKey: Keys.ethereumAddressesProtectedByUserPresence) else {
+            guard let data = keychain.getData(Keys.ethereumAddressesProtectedByUserPresence) else {
                 return []
             }
+
             return NSKeyedUnarchiver.unarchiveObject(with: data) as? [String] ?? []
         }
     }
@@ -125,7 +125,7 @@ open class EtherKeystore: Keystore {
     }
 
     var hasMigratedFromKeystoreFiles: Bool {
-        return userDefaults.data(forKey: Keys.ethereumAddressesWithPrivateKeys) != nil
+        return keychain.getData(Keys.ethereumAddressesWithPrivateKeys) != nil
     }
 
     var recentlyUsedWallet: Wallet? {
@@ -151,17 +151,12 @@ open class EtherKeystore: Keystore {
         }
     }
 
-    init(
-            keychain: KeychainSwift = KeychainSwift(keyPrefix: Constants.keychainKeyPrefix),
-            userDefaults: UserDefaults = UserDefaults.standard,
-            analyticsCoordinator: AnalyticsCoordinator?
-    ) throws {
+    init(keychain: KeychainSwift = KeychainSwift(keyPrefix: Constants.keychainKeyPrefix), analyticsCoordinator: AnalyticsCoordinator?) throws {
         if !UIApplication.shared.isProtectedDataAvailable {
             throw EtherKeystoreError.protectionDisabled
         }
         self.keychain = keychain
         self.keychain.synchronizable = false
-        self.userDefaults = userDefaults
         self.analyticsCoordinator = analyticsCoordinator
     }
 

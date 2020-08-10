@@ -98,7 +98,7 @@ class AppCoordinator: NSObject, Coordinator {
         resetToWelcomeScreen()
         setupAssetDefinitionStoreCoordinator()
         migrateToStoringRawPrivateKeysInKeychain()
-
+        
         if keystore.hasWallets {
             showTransactions(for: keystore.recentlyUsedWallet ?? keystore.wallets.first!)
         } else {
